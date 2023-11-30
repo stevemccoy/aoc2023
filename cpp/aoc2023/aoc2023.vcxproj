@@ -128,6 +128,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="aoc2023.cpp" />
+    <ClCompile Include="Day1.cpp" />
+    <ClCompile Include="Menu.cpp" />
+    <ClCompile Include="Problem.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Day1.h" />
+    <ClInclude Include="Menu.h" />
+    <ClInclude Include="Problem.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
