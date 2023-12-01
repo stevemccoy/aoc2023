@@ -8,20 +8,28 @@ Menu::Menu()
 	problems.clear();
 }
 
+Menu::~Menu()
+{
+	for (Problem* p : problems) {
+		delete p;
+	}
+	problems.clear();
+}
+
 void Menu::loadOptions()
 {
 	// Find out the full list of Problems.
 	Day1 d1;
 	// Sort and store them.
-	problems.push_back(d1);
+	problems.push_back(new Day1());
 }
 
 void Menu::display()
 {
 	cout << "\nMenu:" << endl;
 	int i = 1;
-	for (Problem& p : problems) {
-		cout << i << ". " << p.title() << " - " << p.description() << endl;
+	for (Problem* p : problems) {
+		cout << i << ". " << p->title() << " - " << p->description() << endl;
 	}
 	cout << endl;
 }
@@ -47,7 +55,7 @@ void Menu::run()
 			break;
 		}
 		cout << endl;
- 		problems[option - 1].execute();
+ 		problems[option - 1]->execute();
 	}
 }
 

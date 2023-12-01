@@ -9,6 +9,7 @@ class Menu
 {
 public:
 	Menu();
+	~Menu();
 	// Load menu options.
 	void loadOptions();
 	// Present the menu options on stdout.
@@ -19,7 +20,7 @@ public:
 	void run();
 
 private:
-	vector<Problem> problems;
+	vector<Problem*> problems;
 
 	// Determine if given option is appropriate input for a choice from the menu.
 	bool validOption(int option);

@@ -14,7 +14,7 @@ public:
 	string description() const { return m_description; }
 
 	// Run the problem.
-	virtual void execute();
+	virtual void execute() = 0;
 
 private:
 	string m_title;

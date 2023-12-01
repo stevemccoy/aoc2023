@@ -3,5 +3,13 @@
 class Day1 : public Problem
 {
 public:
-	Day1() : Problem("Day 1. Example Problem", "Dummy description goes here if you have one") {}
+	Day1() : Problem("Day 1. Trebuchet?!", "Trebuchet?!") {}
+	void execute();
+	void part1(const char* fileName) const;
+	void part2(const char* fileName) const;
+private:
+	const char* DIGITS = "0123456789";
+
+	// Find the first and last digits (as digit chars or number words) in the given line.
+	bool locateDigits(const string line, int& firstDigit, int& lastDigit) const;
 };
