@@ -1,5 +1,6 @@
 #include "Menu.h"
 #include "Day1.h"
+#include "Day2.h"
 #include <iostream>
 #include <string>
 
@@ -19,9 +20,9 @@ Menu::~Menu()
 void Menu::loadOptions()
 {
 	// Find out the full list of Problems.
-	Day1 d1;
 	// Sort and store them.
 	problems.push_back(new Day1());
+	problems.push_back(new Day2());
 }
 
 void Menu::display()
@@ -29,7 +30,7 @@ void Menu::display()
 	cout << "\nMenu:" << endl;
 	int i = 1;
 	for (Problem* p : problems) {
-		cout << i << ". " << p->title() << " - " << p->description() << endl;
+		cout << i++ << ". " << p->title() << " - " << p->description() << endl;
 	}
 	cout << endl;
 }

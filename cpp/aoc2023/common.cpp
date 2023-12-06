@@ -13,3 +13,16 @@ std::vector<std::string> read_input_file(const char* file_name) {
     infile.close();
     return result;
 }
+
+vector<string> split_delim(const string& line, char delimiter) {
+    vector<string> result;
+    size_t startPos = 0, delimPos = line.find_first_of(delimiter);
+    while (delimPos != string::npos) {
+        string s1 = line.substr(startPos, delimPos - startPos);
+        result.push_back(s1);
+        startPos = delimPos + 1;
+        delimPos = line.find_first_of(delimiter, startPos);
+    }
+    result.push_back(line.substr(startPos));
+    return result;
+}
