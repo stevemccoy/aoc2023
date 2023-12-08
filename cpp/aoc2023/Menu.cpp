@@ -1,6 +1,7 @@
 #include "Menu.h"
 #include "Day1.h"
 #include "Day2.h"
+#include "Day3.h"
 #include <iostream>
 #include <string>
 
@@ -23,6 +24,7 @@ void Menu::loadOptions()
 	// Sort and store them.
 	problems.push_back(new Day1());
 	problems.push_back(new Day2());
+	problems.push_back(new Day3());
 }
 
 void Menu::display()

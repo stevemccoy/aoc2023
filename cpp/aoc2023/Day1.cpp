@@ -14,7 +14,7 @@ void Day1::execute()
 	part2("input/input1.txt");
 }
 
-void Day1::part1(const char* fileName) const {
+void Day1::part1(const char* fileName) {
 	auto lines = read_input_file(fileName);
 	int sum = 0;
 	for (string line : lines) {
@@ -27,7 +27,7 @@ void Day1::part1(const char* fileName) const {
 	cout << "Input from file " << fileName << " - Sum is " << sum << endl;
 }
 
-void Day1::part2(const char* fileName) const {
+void Day1::part2(const char* fileName) {
 	auto lines = read_input_file(fileName);
 	int sum = 0, firstDigit = 0, lastDigit = 0, value = 0;
 	for (string line : lines) {

@@ -15,8 +15,8 @@ public:
 
 	// Run the problem.
 	virtual void execute() = 0;
-	virtual void part1(const char* fileName) const = 0;
-	virtual void part2(const char* fileName) const = 0;
+	virtual void part1(const char* fileName) = 0;
+	virtual void part2(const char* fileName) = 0;
 
 protected:
 	void init(string t, string d) { m_title = t; m_description = d; }

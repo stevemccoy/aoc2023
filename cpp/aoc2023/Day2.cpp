@@ -15,7 +15,7 @@ void Day2::execute()
 	part2("input/input2.txt");
 }
 
-void Day2::part1(const char* fileName) const {
+void Day2::part1(const char* fileName) {
 	const map<string, int> limits = { {"red",  12}, {"green", 13}, {"blue", 14} };
 	auto games = read_game_counts(fileName);
 	int sum = 0;
@@ -68,7 +68,7 @@ int Day2::gamePower(map<string, int>& game) const {
 	return r * g * b;
 }
 
-void Day2::part2(const char* fileName) const {
+void Day2::part2(const char* fileName) {
 //	const map<string, int> limits = { {"red",  12}, {"green", 13}, {"blue", 14} };
 	auto games = read_game_counts(fileName);
 	int sum = 0, power = 0;
