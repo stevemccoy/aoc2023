@@ -40,7 +40,7 @@ void Day3::part2(const char* fileName)
     std::set<int> neighbours;
     int id = -1;
     int sum = 0;
-    for (auto p : gears) {
+    for (auto& p : gears) {
         auto g = p.second;
         neighbours.clear();
         for (size_t r = (g.row > 0 ? g.row - 1 : 0); ((r < num_rows) && (r <= g.row + 1)); r++) {

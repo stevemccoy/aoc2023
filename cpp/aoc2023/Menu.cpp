@@ -2,6 +2,7 @@
 #include "Day1.h"
 #include "Day2.h"
 #include "Day3.h"
+#include "Day4.h"
 #include <iostream>
 #include <string>
 
@@ -25,6 +26,7 @@ void Menu::loadOptions()
 	problems.push_back(new Day1());
 	problems.push_back(new Day2());
 	problems.push_back(new Day3());
+	problems.push_back(new Day4());
 }
 
 void Menu::display()
