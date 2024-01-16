@@ -1,39 +1,11 @@
 #pragma once
 #include "Problem.h"
+#include "Position.h"
 
 #include <vector>
 #include <map>
 #include <set>
 #include <deque>
-
-// Single location on the grid.
-class Position {
-public:
-	int col, row;
-	Position() : col(0), row(0) {}
-	Position(int c, int r) : col(c), row(r) {}
-	Position(const Position& other) : col(other.col), row(other.row) {}
-	virtual ~Position() {}
-	bool operator==(const Position& other) const {
-		return ((col == other.col) && (row == other.row));
-	}
-	bool operator!=(const Position& other) const {
-		return !(this->operator==(other));
-	}
-	bool operator<(const Position& other) const {
-		return (row == other.row) ? (col < other.col) : (row < other.row);
-	}
-	void move(char direction) {
-		switch (direction)
-		{
-		case 'N': row--; break;
-		case 'S': row++; break;
-		case 'E': col++; break;
-		case 'W': col--; break;
-		default: break;
-		}
-	}
-};
 
 // Type to use for tracking paths through the grid.
 typedef map<Position, int> Path;
