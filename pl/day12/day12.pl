@@ -39,13 +39,14 @@ integer(F) --> digits(Digits),
 	{	number_codes(F, Digits)
 	}.
 
-% DCG for condition sequence?
+
+% DCG for condition sequence.
 
 cond_sequence(List) --> opt_zeros(ZC1), block(BC), continuation(CL), opt_zeros(ZC2),
-	{	conc([[ZC1, BC] | CL], [ZC2], List)
+	{	conc([ZC1, BC | CL], [ZC2], List)
 	}.
 
-continuation([[ZC2, BC] | CL]) --> separator, opt_zeros(ZC1), block(BC), continuation(CL),
+continuation([ZC2, BC | CL]) --> separator, opt_zeros(ZC1), block(BC), continuation(CL),
 	{	ZC2 #= ZC1 + 1
 	}.
 continuation([]) --> [].
@@ -59,8 +60,6 @@ block(N) --> [1], block(M), { N #= M + 1 }.
 block(1) --> [1].
 
 % DCG for sequence. ??
-
-
 
 %% matching_cond_sequence(Groups) --> opt_zeros(_), block(BC), separator.
 
