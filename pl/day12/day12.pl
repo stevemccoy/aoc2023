@@ -3,19 +3,44 @@
 % 
 
 :- use_module(library(clpfd)).
+:- use_module(library(thread)).
+
 :- working_directory(_, 'c:/users/stephen.mccoy/github/aoc2023/pl/day12/').
 
-:- dynamic spring_line/2.
+:- dynamic spring_line/3.
+:- dynamic solution_count/2.
+
+% List utilities.
+
+% List concatenation.
+conc([], L, L).
+conc([H | Tail], L1, [H | L2]) :-
+	conc(Tail, L1, L2).
+
+% S is a sub-sequence of L, from index From to index To inclusive.
+sublist(S, L, From, To) :-
+	S = [_|_],					% S not empty.
+	conc(Before, L2, L),
+	conc(S, _, L2),
+	length(Before, From),
+	length(S, SL),
+	To #= From + SL - 1.
+
+% repeat_value(V, N, List) 
+repeat_value(_, 0, []).
+repeat_value(V, N, [V | Tail]) :-
+	N #> 0,
+	M #= N - 1,
+	repeat_value(V, M, Tail).
 
 % DCG for input file.
 
-input_line(Condition, Groups) --> condition(Condition), " ", groups(Groups),
-	{ assertz(spring_line(Condition, Groups)) }.
+input_line(N, Condition, Groups) --> condition(Condition), " ", groups(Groups),
+	{ assertz(spring_line(N, Condition, Groups)) }.
 
 condition(Condition) --> status_list(Condition).
 
 groups(Groups) --> int_list(Groups).
-
 
 status_list([S1 | Tail]) --> status(S1), !, status_list(Tail).
 status_list([]) --> [].
@@ -42,14 +67,14 @@ integer(F) --> digits(Digits),
 
 % DCG for condition sequence.
 
-cond_sequence(List) --> opt_zeros(ZC1), block(BC), continuation(CL), opt_zeros(ZC2),
-	{	conc([ZC1, BC | CL], [ZC2], List)
-	}.
+cond_sequence([BC | GroupTail], [ZC1 | SolutionTail]) -->
+	opt_zeros(ZC1), block(BC), continuation(GroupTail, SolutionTail), opt_zeros(_).
 
-continuation([ZC2, BC | CL]) --> separator, opt_zeros(ZC1), block(BC), continuation(CL),
+continuation([BC | GroupTail], [ZC2 | SolutionTail]) -->
+	separator, opt_zeros(ZC1), block(BC), continuation(GroupTail, SolutionTail),
 	{	ZC2 #= ZC1 + 1
 	}.
-continuation([]) --> [].
+continuation([], []) --> [].
 
 separator --> [0].
 
@@ -59,33 +84,6 @@ opt_zeros(0) --> [].
 block(N) --> [1], block(M), { N #= M + 1 }.
 block(1) --> [1].
 
-% DCG for sequence. ??
-
-%% matching_cond_sequence(Groups) --> opt_zeros(_), block(BC), separator.
-
-
-% List utilities.
-
-% List concatenation.
-conc([], L, L).
-conc([H | Tail], L1, [H | L2]) :-
-	conc(Tail, L1, L2).
-
-% S is a sub-sequence of L, from index From to index To inclusive.
-sublist(S, L, From, To) :-
-	S = [_|_],					% S not empty.
-	conc(Before, L2, L),
-	conc(S, _, L2),
-	length(Before, From),
-	length(S, SL),
-	To #= From + SL - 1.
-
-% repeat_value(V, N, List) 
-repeat_value(_, 0, []).
-repeat_value(V, N, [V | Tail]) :-
-	N #> 0,
-	M #= N - 1,
-	repeat_value(V, M, Tail).
 
 % Utility.
 
@@ -105,45 +103,44 @@ stream_line(In, Line) :-
 
 % Read the input file.
 
-read_input_line(Stream) :- 
+read_input_line(Stream, M) :- 
 	read_line_to_string(Stream, String),
 	( String = ""
 	  ;
       ( string_codes(String, Chars),
-        phrase(input_line(_, _), Chars, [])
+        phrase(input_line(M, _, _), Chars, [])
       )
     ).
 
-read_input_lines(Stream) :-
-	read_input_line(Stream),
+read_input_lines(Stream, M) :-
+	read_input_line(Stream, M),
 	!,
-	read_input_lines(Stream).
-read_input_lines(_).
+	N #= M + 1,
+	read_input_lines(Stream, N).
+read_input_lines(_, _).
 
 read_input_data(FileName) :-
-	retractall(spring_line(_,_)),
+	retractall(spring_line(_,_,_)),
 	open(FileName, read, Stream),
-	read_input_lines(Stream),
+	read_input_lines(Stream, 1),
 	close(Stream).
 
+% Parse single line String using DCG.
+process_string(String, C1, G1) :-
+	string_codes(String, Chars1),
+	phrase(condition(C1), Chars1, [_ | Chars2]),
+	phrase(groups(G1), Chars2, []).
 
 % Find matching solution given the conditions in Template and Groups information.
-solution(Template, Groups, Solution) :-
+solution(Template, Groups, Solution, Results) :-
 	% Reduce a list to match with Template.
 	length(Template, N),
 	length(Solution, N),
 	Solution ins 0..1,
 	Solution = Template,
-	% Now, make a matching template for the group counts (including spaces for the zeros).
-	findall([C, _], (member(C, Groups)), CL1),
-	flatten(CL1, CL2),
-	GroupCounts = [_ | CL2],
 	!,
-	phrase(cond_sequence(GroupCounts), Solution, []).
+	phrase(cond_sequence(Groups, Results), Solution, []).
 
-
-%% reduce_solution([0 | Tail], Groups, Count) :-
-%% 	reduce_solution(Tail, Count)
 
 % Replace unbound entries in Template with x.
 translate_template([], []).
@@ -153,23 +150,6 @@ translate_template([H | Tail], [H | TTail]) :-
 	translate_template(Tail, TTail).
 translate_template([_ | Tail], [x | TTail]) :-
 	translate_template(Tail, TTail).
-
-
-%% count_solutions(Template, Groups, Count) :-
-%% 	translate_template(Template, Conditions),
-
-
-munch_zeros([], []).
-munch_zeros([0 | Tail], MTail) :-
-	!,
-	munch_zeros(Tail, MTail).
-munch_zeros(L, L).
-
-%% match_group([], Group) :-
-%% 	repeat_value(1, Group, L1),
-
-
-
 
 
 % Make a copy of a given condition list, creating new variables for any
@@ -205,29 +185,72 @@ expand_lists(CL1, GL1, CL2, GL2) :-
 	expand_list(CL1, 5, "?", CL2),
 	expand_list(GL1, 5, ",", GL2).
 
+
+% find_solution(Condition, Groups, Result).
+
+ordered([GC1], NB, [GS1]) :-
+	NB #>= GS1 + GC1.
+ordered([GC1, GC2 | GTail], NB, [GS1, GS2 | GSTail]) :-
+	GS2 #> GS1 + GC1,
+	ordered([GC2 | GTail], NB, [GS2 | GSTail]).
+
+match_condition(Condition, [GC1], [GS1]) :-
+	repeat_value(1, GC1, Block),
+	conc(Before, Block, L1),
+	GI1 #= GS1 - 1,
+	length(Before, GI1),
+	conc(L1, _, Condition).
+match_condition(Condition, [GC1, GC2 | GCTail], [GS1, GS2 | GSTail]) :-
+	repeat_value(1, GC1, Block),
+	conc(Before, Block, [0 | L1]),
+	GI1 #= GS1 - 1,
+	length(Before, GI1),
+	conc(L1, _, Condition),
+	match_condition(Condition, [GC2 | GCTail], [GS2 | GSTail]).
+
+find_solution(Condition, Groups, Results) :-
+	length(Condition, NB),
+	length(Groups, NG),
+	length(Results, NG),
+	Results ins 1..NB,
+	ordered(Groups, NB, Results),
+	!,
+	match_condition(Condition, Groups, Results).
+
+
 % Solve the challenge.
 
 day12_part1(FileName) :-
 	writeln("Advent of Code 2023, Day 12, Part 1:"),
 	read_input_data(FileName),
 	findall(NS, (
-		spring_line(Condition, Groups),
-		findall(Solution, (solution(Condition, Groups, Solution)), SL1),
+		spring_line(_, Condition, Groups),
+		findall(Solution, (solution(Condition, Groups, Solution, _)), SL1),
 		length(SL1, NS)
 	), CountList),
 	writeln(CountList),
 	sum_list(CountList, Total),
 	format('Total count of combinations = ~w\n', [Total]).
 
+record_solutions :-
+	concurrent_forall(
+		(	spring_line(LN, Condition1, Groups1),
+			expand_lists(Condition1, Groups1, Condition, Groups),
+			findall(1, (solution(Condition, Groups, _, _)), SL1),
+			length(SL1, NS)
+		),
+		(	assertz(solution_count(LN, NS)),
+			writeln(LN)
+		),
+		[threads(8)]
+	).
+
 day12_part2(FileName) :-
-	writeln("Advent of Code 2023, Day 12, Part 2:"),
+	writeln('Advent of Code 2023, Day 12, Part 2:'),
 	read_input_data(FileName),
-	findall(NS, (
-		spring_line(Condition1, Groups1),
-		expand_lists(Condition1, Groups1, Condition, Groups),
-		findall(Solution, (solution(Condition, Groups, Solution)), SL1),
-		length(SL1, NS)
-	), CountList),
+	retractall(solution_count(_,_)),
+	record_solutions,
+	findall(NS, solution_count(_, NS), CountList),
 	writeln(CountList),
 	sum_list(CountList, Total),
 	format('Total count of combinations = ~w\n', [Total]).
