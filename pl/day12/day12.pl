@@ -17,14 +17,12 @@ conc([], L, L).
 conc([H | Tail], L1, [H | L2]) :-
 	conc(Tail, L1, L2).
 
-% S is a sub-sequence of L, from index From to index To inclusive.
-sublist(S, L, From, To) :-
+% S is a sub-sequence of L, from index From.
+sublist(S, L, From) :-
 	S = [_|_],					% S not empty.
 	conc(Before, L2, L),
 	conc(S, _, L2),
-	length(Before, From),
-	length(S, SL),
-	To #= From + SL - 1.
+	length(Before, From).
 
 % repeat_value(V, N, List) 
 repeat_value(_, 0, []).
@@ -194,28 +192,76 @@ ordered([GC1, GC2 | GTail], NB, [GS1, GS2 | GSTail]) :-
 	GS2 #> GS1 + GC1,
 	ordered([GC2 | GTail], NB, [GS2 | GSTail]).
 
+block_template(N, T) :-
+	repeat_value(1, N, Ones),
+	conc([0 | Ones], [0], T).
+
+% Condition must be padded front and back with 0.
 match_condition(Condition, [GC1], [GS1]) :-
-	repeat_value(1, GC1, Block),
-	conc(Before, Block, L1),
-	GI1 #= GS1 - 1,
-	length(Before, GI1),
-	conc(L1, _, Condition).
+	block_template(GC1, Block),
+	!,
+	sublist(Block, Condition, From),
+	GS1 #= From + 1.
 match_condition(Condition, [GC1, GC2 | GCTail], [GS1, GS2 | GSTail]) :-
-	repeat_value(1, GC1, Block),
-	conc(Before, Block, [0 | L1]),
-	GI1 #= GS1 - 1,
-	length(Before, GI1),
-	conc(L1, _, Condition),
+	block_template(GC1, Block),
+	!,
+	sublist(Block, Condition, From),
+	GS1 #= From + 1,
+	GS2 #> GS1 + GC1,
 	match_condition(Condition, [GC2 | GCTail], [GS2 | GSTail]).
+
+
+% Difference list append.
+dapp(A-B,B-C,A-C).
+
+% Want to rewrite the matching and counting function in terms of difference list operations on
+% the conditions list, reducing the scope as groups are matched or consumed
+% (e.g. in ignoring 0 values).
+
+dblock(N, Block) :-
+	repeat_value(1, N, BL1),
+	dapp(BL1-[], [0]-[], Block).
+
+matchable_sequence([], 0, []).
+matchable_sequence([H | Rest], 0, Rest) :-
+	!,
+	H \== 1.
+matchable_sequence([H | Tail], N, Rest) :-
+	H \== 0,
+	M #= N - 1,
+	matchable_sequence(Tail, M, Rest).
+
+% match_group(Condition-Tail, GC, PathCount)
+match_group([], [N | GTail], 0).
+match_group([0 | Tail], [N | GTail], PC) :-
+	!,
+	match_group(Tail, N, PC).
+match_group([1 | Tail], N, PC) :-
+	matchable_sequence([1 | Tail], N, Rest),
+	match_group(Rest, )
+
+
+
+count_faults([], 0).
+count_faults([H | Tail], N) :-
+	ground(H),
+	H = 1,
+	!,
+	count_faults(Tail, M),
+	N #= M + 1.
+count_faults([_ | Tail], N) :-
+	count_faults(Tail, N).
 
 find_solution(Condition, Groups, Results) :-
 	length(Condition, NB),
 	length(Groups, NG),
+	sum_list(Groups, FaultCount),
 	length(Results, NG),
 	Results ins 1..NB,
-	ordered(Groups, NB, Results),
+	conc([0 | Condition], [0], PaddedCondition),
 	!,
-	match_condition(Condition, Groups, Results).
+	match_condition(PaddedCondition, Groups, Results),
+	count_faults(PaddedCondition, FaultCount).
 
 
 % Solve the challenge.
@@ -223,10 +269,11 @@ find_solution(Condition, Groups, Results) :-
 day12_part1(FileName) :-
 	writeln("Advent of Code 2023, Day 12, Part 1:"),
 	read_input_data(FileName),
-	findall(NS, (
+	findall(NS1, (
 		spring_line(_, Condition, Groups),
-		findall(Solution, (solution(Condition, Groups, Solution, _)), SL1),
-		length(SL1, NS)
+		findall(Result, (find_solution(Condition, Groups, Result)), SL1),
+%		findall(Solution, (solution(Condition, Groups, Solution, _)), SL2),
+		length(SL1, NS1)
 	), CountList),
 	writeln(CountList),
 	sum_list(CountList, Total),
@@ -236,7 +283,7 @@ record_solutions :-
 	concurrent_forall(
 		(	spring_line(LN, Condition1, Groups1),
 			expand_lists(Condition1, Groups1, Condition, Groups),
-			findall(1, (solution(Condition, Groups, _, _)), SL1),
+			findall(1, (find_solution(Condition, Groups, _)), SL1),
 			length(SL1, NS)
 		),
 		(	assertz(solution_count(LN, NS)),
@@ -248,9 +295,12 @@ record_solutions :-
 day12_part2(FileName) :-
 	writeln('Advent of Code 2023, Day 12, Part 2:'),
 	read_input_data(FileName),
-	retractall(solution_count(_,_)),
-	record_solutions,
-	findall(NS, solution_count(_, NS), CountList),
+	findall(NS1, (
+		spring_line(_, C1, G1),
+		expand_lists(C1, G1, C2, G2),
+		findall(1, (find_solution(C2, G2, _)), SL1),
+		length(SL1, NS1)
+	), CountList),
 	writeln(CountList),
 	sum_list(CountList, Total),
 	format('Total count of combinations = ~w\n', [Total]).
