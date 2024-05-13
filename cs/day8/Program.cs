@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Net;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace Day8
 {
@@ -63,7 +61,7 @@ namespace Day8
             Console.WriteLine("Number of steps from start to finish = " + count);
         }
 
-        static void Part2(String fileName) {
+        static void Part2(string fileName) {
             Setup();
             Console.WriteLine("Part 2.");
             ProcessInputFile(fileName);
@@ -73,7 +71,7 @@ namespace Day8
                 Console.WriteLine("No endpoints found.");
                 return;
             }
-            Dictionary<string, Int64> tideMarks = new();
+            Dictionary<string, long> tideMarks = new();
             bool done = false;
             Int64 target = 0;
             while (!done) {
@@ -86,7 +84,7 @@ namespace Day8
                 foreach (var s2 in cycles.Keys) {
                     foreach (var c2 in cycles[s2]) {
                         while (c2.FinishAt < target) {
-                            Int64 m = Int64.Max(1, (target - c2.FinishAt) / c2.RepeatSteps);
+                            long m = Int64.Max(1, (target - c2.FinishAt) / c2.RepeatSteps);
                             c2.FinishAt += c2.RepeatSteps * m;
                         }
                     }
