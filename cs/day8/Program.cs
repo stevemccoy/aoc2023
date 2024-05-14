@@ -30,34 +30,34 @@ namespace Day8
 
     internal class Cycle
     {
-        public string Start { get; set; }
-        public string Finish { get; set; }
-        public Int64 LeadSteps { get; set; }
-        public Int64 RepeatSteps { get; set; }
-        public Int64 FinishAt { get; set; }
+        public required string Start { get; set; }
+        public required string Finish { get; set; }
+        public long LeadSteps { get; set; }
+        public long RepeatSteps { get; set; }
+        public long FinishAt { get; set; }
     }
 
     class Program
     {
         static string Directions = string.Empty;
-        static readonly Dictionary<string, Node> Nodes = new();
+        static readonly Dictionary<string, Node> Nodes = [];
 
         static void Main(string[] args)
         {
             Console.WriteLine("Hello, World!");
-            Part1("test8a.txt");
-            Part1("input8.txt");
-            Part2("test8b.txt");
+            // Part1("test8a.txt");
+            // Part1("input8.txt");
+            // Part2("test8b.txt");
             Part2("input8.txt");
             Console.WriteLine("That's all folks!");
         }
 
-        static void Part1(String fileName)
+        static void Part1(string fileName)
         {
             Setup();
             Console.WriteLine("Part 1.");
             ProcessInputFile(fileName);
-            Int64 count = NumStepsFromTo("AAA", "ZZZ");
+            long count = NumStepsFromTo("AAA", "ZZZ");
             Console.WriteLine("Number of steps from start to finish = " + count);
         }
 
@@ -73,7 +73,7 @@ namespace Day8
             }
             Dictionary<string, long> tideMarks = new();
             bool done = false;
-            Int64 target = 0;
+            long target = 0;
             while (!done) {
                 // Find low water mark for each start point.
                 foreach (var s1 in cycles.Keys) {
@@ -84,7 +84,7 @@ namespace Day8
                 foreach (var s2 in cycles.Keys) {
                     foreach (var c2 in cycles[s2]) {
                         while (c2.FinishAt < target) {
-                            long m = Int64.Max(1, (target - c2.FinishAt) / c2.RepeatSteps);
+                            long m = long.Max(1, (target - c2.FinishAt) / c2.RepeatSteps);
                             c2.FinishAt += c2.RepeatSteps * m;
                         }
                     }
@@ -95,11 +95,11 @@ namespace Day8
             Console.WriteLine("Done. Found Endpoint At: " + target);
         }
 
-        private static Int64 NumStepsFromTo(string fromNode, string toNode)
+        private static long NumStepsFromTo(string fromNode, string toNode)
         {
             string node = fromNode;
             string directions = Directions;
-            Int64 count = 0;
+            long count = 0;
             while (node != toNode) {
                 char whereNow = directions[0];
                 directions = directions[1..];
@@ -120,11 +120,11 @@ namespace Day8
 
         private static Dictionary<string, List<Cycle>> ExtractCycles() {
             var paths = AnalysePaths();
-            Dictionary<string, List<Cycle>> cycles = new();
+            Dictionary<string, List<Cycle>> cycles = [];
             foreach (var path in paths) {
                 foreach (var ep in path.EndPoints) {
                     if (!cycles.ContainsKey(path.Start)) {
-                        cycles[path.Start] = new List<Cycle>();
+                        cycles[path.Start] = [];
                     }
                     cycles[path.Start].Add(new Cycle()
                     {
@@ -140,21 +140,23 @@ namespace Day8
         }
 
         private static List<Path> AnalysePaths() {
-            List<Path> result = new List<Path>();
+            List<Path> result = [];
             var starts = StartPositions();
             var ends = GoalPositions();
             foreach (var s in starts) {
                 string whereAt = s;
-                var directions = Directions;
-                List<string> seen = new() { s };
-                Dictionary<int, string> endNodes = new();
+                Stack<char> directions = new([.. Directions.Reverse()]);
+                List<string> seen = [s];
+                Dictionary<int, string> endNodes = [];
+                char whereNow;
                 while (true) {
-                    char whereNow = directions[0];
-                    directions = (directions.Length == 1) ? Directions : directions.Substring(1);
+                    if (!directions.TryPop(out whereNow)) {
+                        directions = new([.. Directions.Reverse()]);
+                    }
                     whereAt = (whereNow == 'L') ? Nodes[whereAt].Left : Nodes[whereAt].Right;
                     if (seen.Contains(whereAt)) {
                         int leadCount = seen.IndexOf(whereAt);
-                        Path path = new Path()
+                        Path path = new()
                         {
                             Start = s,
                             CycleStart = whereAt,
@@ -169,18 +171,18 @@ namespace Day8
                         seen.Add(whereAt);
                     }
                     if (ends.Contains(whereAt)) {
-                        endNodes[seen.Count - 1] = whereAt;
+                        endNodes.Add(seen.Count - 1, whereAt);
                     }
                 }
             }
             return result;
         }
 
-        private static List<string> StartPositions() => Nodes.Keys.Where(n1 => n1.EndsWith('A')).ToList() ?? new List<string>();
+        private static List<string> StartPositions() => Nodes.Keys.Where(n1 => n1.EndsWith('A')).ToList() ?? [];
 
-        private static List<string> GoalPositions() => Nodes.Keys.Where(n1 => n1.EndsWith('Z')).ToList() ?? new List<string>();
+        private static List<string> GoalPositions() => Nodes.Keys.Where(n1 => n1.EndsWith('Z')).ToList() ?? [];
 
-        private static Int64 CycleEndsMeetAt(Cycle c1, Cycle c2) {
+        private static long CycleEndsMeetAt(Cycle c1, Cycle c2) {
             // Detect if cycles can or cannot meet.
             if (c1.RepeatSteps == c2.RepeatSteps) {
                 if (c1.LeadSteps == c2.LeadSteps) {
@@ -195,7 +197,7 @@ namespace Day8
                 (c1, c2) = (c2, c1);
             }
             // Now trial multiples of c1 until we find one that is a multiple of c2.
-            for (Int64 j = 1; j < c1.RepeatSteps; j++) {
+            for (long j = 1; j < c1.RepeatSteps; j++) {
                 var num = j * c1.RepeatSteps + c1.LeadSteps - c2.LeadSteps;
                 if (num % c2.RepeatSteps == 0) {
                     return j * c1.RepeatSteps + c1.LeadSteps;
