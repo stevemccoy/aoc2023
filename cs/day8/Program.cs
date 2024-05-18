@@ -16,16 +16,6 @@ namespace Day8
         public required string CycleStart { get; set; }
         public int CycleSteps { get; set; }
         public required Dictionary<int,string> EndPoints { get; set; }
-
-        public bool EndsOnStep(int step) {
-            if (EndPoints.ContainsKey(step)) {
-                return true;
-            }
-            if (step >= LeadSteps) {
-                return EndPoints.ContainsKey(LeadSteps + (step - LeadSteps) % CycleSteps);
-            }
-            return false;
-        }
     }
 
     internal class Cycle
@@ -45,9 +35,9 @@ namespace Day8
         static void Main(string[] args)
         {
             Console.WriteLine("Hello, World!");
-            // Part1("test8a.txt");
-            // Part1("input8.txt");
-            // Part2("test8b.txt");
+            Part1("test8a.txt");
+            Part1("input8.txt");
+            Part2("test8b.txt");
             Part2("input8.txt");
             Console.WriteLine("That's all folks!");
         }
@@ -61,38 +51,19 @@ namespace Day8
             Console.WriteLine("Number of steps from start to finish = " + count);
         }
 
-        static void Part2(string fileName) {
+        static void Part2(string fileName)
+        {
             Setup();
             Console.WriteLine("Part 2.");
             ProcessInputFile(fileName);
-
-            var cycles = ExtractCycles();
-            if (cycles.Count == 0) {
-                Console.WriteLine("No endpoints found.");
-                return;
+            // This approach works only because there is the same number of lead steps into the 
+            // first goal for each path found.
+            var paths = AnalysePaths();
+            long result = 1L;
+            foreach (var p in paths) {
+                result = lcm(result, p.CycleSteps);
             }
-            Dictionary<string, long> tideMarks = new();
-            bool done = false;
-            long target = 0;
-            while (!done) {
-                // Find low water mark for each start point.
-                foreach (var s1 in cycles.Keys) {
-                    tideMarks[s1] = cycles[s1].Min(c1 => c1.FinishAt);
-                }
-                // Find highest low water mark and bring others up to it.
-                target = tideMarks.Values.Max();
-                foreach (var s2 in cycles.Keys) {
-                    foreach (var c2 in cycles[s2]) {
-                        while (c2.FinishAt < target) {
-                            long m = long.Max(1, (target - c2.FinishAt) / c2.RepeatSteps);
-                            c2.FinishAt += c2.RepeatSteps * m;
-                        }
-                    }
-                }
-                // Have we found a solution?
-                done = tideMarks.Values.All(v => v == target);
-            }
-            Console.WriteLine("Done. Found Endpoint At: " + target);
+            Console.WriteLine("Big LCM of all paths = " + result);
         }
 
         private static long NumStepsFromTo(string fromNode, string toNode)
@@ -118,27 +89,6 @@ namespace Day8
             return count;
         }
 
-        private static Dictionary<string, List<Cycle>> ExtractCycles() {
-            var paths = AnalysePaths();
-            Dictionary<string, List<Cycle>> cycles = [];
-            foreach (var path in paths) {
-                foreach (var ep in path.EndPoints) {
-                    if (!cycles.ContainsKey(path.Start)) {
-                        cycles[path.Start] = [];
-                    }
-                    cycles[path.Start].Add(new Cycle()
-                    {
-                        Start = path.Start,
-                        Finish = ep.Value,
-                        FinishAt = ep.Key,
-                        LeadSteps = path.LeadSteps,
-                        RepeatSteps = path.CycleSteps
-                    });
-                }
-            }
-            return cycles;
-        }
-
         private static List<Path> AnalysePaths() {
             List<Path> result = [];
             var starts = StartPositions();
@@ -146,20 +96,25 @@ namespace Day8
             foreach (var s in starts) {
                 string whereAt = s;
                 Stack<char> directions = new([.. Directions.Reverse()]);
-                List<string> seen = [s];
+                long index = 1;
+                List<string> seen = [s + "-" + index];
                 Dictionary<int, string> endNodes = [];
                 char whereNow;
+                bool seenEndNode = false;
                 while (true) {
-                    if (!directions.TryPop(out whereNow)) {
+                    while (!directions.TryPop(out whereNow)) {
                         directions = new([.. Directions.Reverse()]);
+                        index = 0;
                     }
+                    index++;
                     whereAt = (whereNow == 'L') ? Nodes[whereAt].Left : Nodes[whereAt].Right;
-                    if (seen.Contains(whereAt)) {
-                        int leadCount = seen.IndexOf(whereAt);
+                    string entry = whereAt + "-" + index;
+                    if (seenEndNode && seen.Contains(entry)) {     // What if no ends yet?
+                        int leadCount = seen.IndexOf(entry);
                         Path path = new()
                         {
-                            Start = s,
-                            CycleStart = whereAt,
+                            Start = seen[0],
+                            CycleStart = entry,
                             LeadSteps = leadCount,
                             CycleSteps = seen.Count - leadCount,
                             EndPoints = endNodes
@@ -168,10 +123,11 @@ namespace Day8
                         break;
                     }                   
                     else {
-                        seen.Add(whereAt);
+                        seen.Add(entry);
                     }
                     if (ends.Contains(whereAt)) {
-                        endNodes.Add(seen.Count - 1, whereAt);
+                        seenEndNode = true;
+                        endNodes.Add(seen.Count - 1, entry);
                     }
                 }
             }
@@ -182,28 +138,21 @@ namespace Day8
 
         private static List<string> GoalPositions() => Nodes.Keys.Where(n1 => n1.EndsWith('Z')).ToList() ?? [];
 
-        private static long CycleEndsMeetAt(Cycle c1, Cycle c2) {
-            // Detect if cycles can or cannot meet.
-            if (c1.RepeatSteps == c2.RepeatSteps) {
-                if (c1.LeadSteps == c2.LeadSteps) {
-                    return c1.FinishAt;
-                }
-                else {
-                    return 0;
-                }
+        // Least common multiple (LCM), using GCD.
+        private static long lcm(long num1, long num2) {
+            long gcd1 = gcd(num1, num2);
+            long lcm1 = num1 * num2 / gcd1;
+            return lcm1;
+        }
+
+        // Greatest common divisor (GCD) using Euclid's algorithm.
+        private static long gcd(long num1, long num2) {
+            if (num2 == 0) {
+                return num1;
             }
-            // Make sure c1 has the longer period.
-            if (c1.RepeatSteps < c2.RepeatSteps) {
-                (c1, c2) = (c2, c1);
+            else {
+                return gcd(num2, num1 % num2);
             }
-            // Now trial multiples of c1 until we find one that is a multiple of c2.
-            for (long j = 1; j < c1.RepeatSteps; j++) {
-                var num = j * c1.RepeatSteps + c1.LeadSteps - c2.LeadSteps;
-                if (num % c2.RepeatSteps == 0) {
-                    return j * c1.RepeatSteps + c1.LeadSteps;
-                }
-            }
-            return 0;
         }
 
         static void Setup()
