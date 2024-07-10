@@ -35,7 +35,7 @@ void Day10::part2(const char* fileName)
     Path path, leftSide;
     extract_path(path);
     mark_up(path, 'p');
-    left_side(path, leftSide);
+    left_side2(path, leftSide);
     mark_up(leftSide, '*');
     display();
     spread(leftSide, path);
@@ -231,6 +231,102 @@ void Day10::left_side(const Path& path, Path& result) {
             }
         }
     }
+}
+
+void Day10::left_side2(const Path& path, Path& result) {
+    // All the valid positions on the left bank of the path.
+    result.clear();
+    // Prime the tracking from cyclical path - both end points. And invert the map given! 
+    int minIndex = 0, maxIndex = 0;
+    map<int, Position> posFromIndex;
+    for (auto& p : path) {
+        posFromIndex[p.second] = p.first;
+        if (minIndex > p.second) {
+            minIndex = p.second;
+        }
+        else if (maxIndex < p.second) {
+            maxIndex = p.second;
+        }
+    }
+    Position p1 = posFromIndex[maxIndex];
+    Position p2 = posFromIndex[minIndex];
+    Position p3 = posFromIndex[minIndex + 1];
+    Position px;
+    string shape;
+    char direction;
+    int npi = 1;
+    for (int i = minIndex; i <= maxIndex - 2; i++) {
+        p1 = posFromIndex[i];
+        p2 = posFromIndex[i + 1];
+        p3 = posFromIndex[i + 2];
+        shape = this->shape(p1, p2, p3);
+        if (shape == "NN") {
+            p2.neighbour('W', px);
+            result[px] = npi++;
+        }
+        else if (shape == "SS") {
+            p2.neighbour('E', px);
+            result[px] = npi++;
+        }
+        else if (shape == "EE") {
+            p2.neighbour('N', px);
+            result[px] = npi++;
+        }
+        else if (shape == "WW") {
+            p2.neighbour('S', px);
+            result[px] = npi++;
+        }
+
+        else if (shape == "NE") {
+            p2.neighbour('W', px);
+            result[px] = npi++;
+            px.row--;
+            result[px] = npi++;
+            px.col++;
+            result[px] = npi++;
+        }
+        else if (shape == "NW") {
+        }
+
+        else if (shape == "SW") {
+            p2.neighbour('E', px);
+            result[px] = npi++;
+            px.row++;
+            result[px] = npi++;
+            px.col--;
+            result[px] = npi++;
+        }
+        else if (shape == "SE") {
+        }
+
+        else if (shape == "ES") {
+            p2.neighbour('N', px);
+            result[px] = npi++;
+            px.col++;
+            result[px] = npi++;
+            px.row++;
+            result[px] = npi++;
+        }
+        else if (shape == "EN") {
+        }
+
+        else if (shape == "WN") {
+            p2.neighbour('S', px);
+            result[px] = npi++;
+            px.col--;
+            result[px] = npi++;
+            px.row--;
+            result[px] = npi++;
+        }
+        else if (shape == "WS") {
+        }
+
+    }
+
+    // Remove those elements from result that are on the path.
+//    for (std::pair<Position, int>& p : result) {
+
+//    }
 }
 
 Position Day10::left_target(const Position& p1, const Position& p2) {

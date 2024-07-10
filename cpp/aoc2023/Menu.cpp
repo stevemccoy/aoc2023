@@ -5,6 +5,7 @@
 #include "Day4.h"
 #include "Day10.h"
 #include "Day11.h"
+#include "Day13.h"
 #include "Day23.h"
 
 #include <iostream>
@@ -33,6 +34,7 @@ void Menu::loadOptions()
 	problems.push_back(new Day4());
 	problems.push_back(new Day10());
 	problems.push_back(new Day11());
+	problems.push_back(new Day13());
 	problems.push_back(new Day23());
 }
 

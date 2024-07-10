@@ -60,6 +60,7 @@ private:
 	bool extend(const Position& from, const Position& via, Position& to) const;
 
 	void left_side(const Path& path, Path& result);
+	void left_side2(const Path& path, Path& result);
 	Position left_target(const Position& p1, const Position& p2);
 	string shape(const Position& p1, const Position& p2, const Position& p3);
 	char direction(const Position& p1, const Position& p2);

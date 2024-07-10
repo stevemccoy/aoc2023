@@ -32,6 +32,18 @@ public:
 		default: break;
 		}
 	}
+	void neighbour(char direction, Position& other) {
+		other.col = col;
+		other.row = row;
+		switch (direction)
+		{
+		case 'N': other.row--; break;
+		case 'S': other.row++; break;
+		case 'E': other.col++; break;
+		case 'W': other.col--; break;
+		default: break;
+		}
+	}
 	number distance(const Position& other) const {
 		return (labs(col - other.col) + labs(row - other.row));
 	}
