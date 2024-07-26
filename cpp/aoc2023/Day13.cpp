@@ -12,8 +12,8 @@ void Day13::execute()
     part1("input/input13.txt");
     std::cout << "Part 2. Test Input..." << endl;
     part2("input/test13.txt");
-    //std::cout << "Part 2. Puzzle Input..." << endl;
-    //part2("input/input10.txt");
+    std::cout << "Part 2. Puzzle Input..." << endl;
+    part2("input/input13.txt");
 }
 
 // 20527 too low.
