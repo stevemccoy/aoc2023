@@ -9,6 +9,7 @@
 #include "Day14.h"
 #include "Day15.h"
 #include "Day16.h"
+#include "Day18.h"
 #include "Day23.h"
 
 #include <iostream>
@@ -41,6 +42,7 @@ void Menu::loadOptions()
 	problems.push_back(new Day14());
 	problems.push_back(new Day15());
 	problems.push_back(new Day16());
+	problems.push_back(new Day18());
 	problems.push_back(new Day23());
 }
 
