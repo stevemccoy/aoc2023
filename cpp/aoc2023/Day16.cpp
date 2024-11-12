@@ -2,30 +2,26 @@
 #include "common.h"
 #include<iostream>
 
-// Beam comparator (using lambda).
-class BeamCompare
-{
-    bool operator()(const Beam& b1, const Beam& b2) const /* noexcept */
-    {
-        return (b1.loc.c < b2.loc.c) || (b1.loc.r < b2.loc.r) || (b1.hdg < b2.hdg);
-    }
-};
-
-static bool operator<(const Beam& b1, const Beam& b2) /* noexcept */
-{
-    return (b1.loc.c < b2.loc.c) || (b1.loc.r < b2.loc.r) || (b1.hdg < b2.hdg);
-}
-
 static bool operator<(const Location& b1, const Location& b2) /* noexcept */
 {
-    return (b1.c < b2.c) || (b1.r < b2.r);
+    return (b1.c == b2.c) ? (b1.r < b2.r) : (b1.c < b2.c);
 }
 
+bool operator<(const Beam& b1, const Beam& b2) /* noexcept */
+{
+    return (b1.hdg == b2.hdg) ? (b1.loc < b2.loc) : (b1.hdg < b2.hdg);
+}
 
 void Day16::execute()
 {
-	std::cout << "Part 1. Test Input..." << std::endl;
-	part1("input/test16.txt");
+    std::cout << "Part 1. Test Input..." << std::endl;
+    part1("input/test16.txt");
+    std::cout << "Part 1. Puzzle Input..." << std::endl;
+    part1("input/input16.txt");
+    std::cout << "Part 2. Test Input..." << std::endl;
+    part2("input/test16.txt");
+    std::cout << "Part 2. Puzzle Input..." << std::endl;
+    part2("input/input16.txt");
 }
 
 void Day16::part1(const char* fileName)
@@ -72,8 +68,57 @@ void Day16::process_lines(const vector<string>& lines)
     }
 }
 
+size_t Day16::beam_score(int c, int r, Direction d) {
+    deque<Beam> open;
+    std::map<Beam, bool> seen;
+    open.clear();
+    seen.clear();
+    Beam start = { {c,r}, d };
+    open.push_back(start);
+    project(open, seen);
+    return count_locations(seen);
+}
+
 void Day16::part2(const char* fileName)
 {
+    auto lines = read_input_file(fileName);
+    process_lines(lines);
+
+    // Find best starting vector (position and direction).
+    Beam bestBeam = {{0,0}, e };
+    size_t bestScore = 0;
+
+    deque<Beam> open;
+    std::map<Beam, bool> seen;
+    // Try north and south starting beams.
+    for (int c = 0; c < numCols; c++) {
+        size_t southScore = beam_score(c, 0, s);
+        if (southScore > bestScore) {
+            bestScore = southScore;
+            bestBeam = { {c,0}, s };
+        }
+        size_t northScore = beam_score(c, numRows - 1, n);
+        if (northScore > bestScore) {
+            bestScore = northScore;
+            bestBeam = { {c,numRows - 1}, n };
+        }
+    }
+    // Try east and west starting beams.
+    for (int r = 0; r < numRows; r++) {
+        size_t eastScore = beam_score(0, r, e);
+        if (eastScore > bestScore) {
+            bestScore = eastScore;
+            bestBeam = { {0,r}, e };
+        }
+        size_t westScore = beam_score(0, numCols - 1, w);
+        if (westScore > bestScore) {
+            bestScore = westScore;
+            bestBeam = { {0,numCols - 1}, w };
+        }
+    }
+
+    std::cout << "Best score = " << bestScore << " for Beam: (" 
+        << bestBeam.loc.c << "," << bestBeam.loc.r << ") -- " << bestBeam.hdg << "." << endl;
 }
 
 void Day16::project(deque<Beam>& open, std::map<Beam, bool>& seen)

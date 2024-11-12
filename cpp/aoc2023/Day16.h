@@ -8,7 +8,7 @@
 
 using namespace std;
 
-typedef enum { n, e, w, s } Direction;
+typedef enum { n = 0, e = 1, w = 2, s = 3 } Direction;
 typedef struct { int c; int r; } Location;
 typedef struct {
 	Location loc; 
@@ -29,14 +29,15 @@ public:
 	void part2(const char* fileName);
 
 private:
-	size_t numRows;
-	size_t numCols;
+	int numRows;
+	int numCols;
 	char* grid;
 
 	char get(int c, int r) { return grid[c + r * numCols]; }
 	void set(int c, int r, char v) { grid[c + r * numCols] = v; }
 
 	void process_lines(const vector<string>& lines);
+	size_t beam_score(int c, int r, Direction d);
 	void project(deque<Beam>& open, std::map<Beam, bool>& seen);
 	void reflect(char mirror, Beam b, deque<Beam>& open);
 
